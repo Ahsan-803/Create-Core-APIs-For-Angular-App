@@ -1,0 +1,132 @@
+[Route("api/[controller]")]
+[ApiController]
+public class EpuEmployeesController : ControllerBase
+{
+    private readonly EpuContext _context;
+
+    public EpuEmployeesController(EpuContext context)
+    {
+        _context = context;
+    }
+
+    // GET: api/EpuEmployees
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<EpuEmployee>>> GetEpuEmployee()
+    {
+      if (_context.EpuEmployee == null)
+      {
+          return NotFound();
+      }
+        //return await _context.EpuEmployee.ToListAsync();
+        var employees = (from e in _context.EpuEmployee
+                         join d in _context.EpuDesignation
+                         on e.DesignationID equals d.Id
+
+                         select new EpuEmployee
+                         {
+                             Id = e.Id,
+                             Name = e.Name,
+                             LastName = e.LastName,
+                             Email = e.Email,
+                             Age = e.Age,
+                             DesignationID = e.DesignationID,
+                             Desigantion = d.Designation,
+                             Doj = e.Doj,
+                             Gender = e.Gender,
+                             isActive = e.isActive,
+                             isMarried = e.isMarried,
+                            
+                         }
+                         );
+        //Console.WriteLine(employees);
+        //Console.WriteLine(employees.Desigantion);
+        return await employees.ToListAsync();
+    }
+
+    // GET: api/EpuEmployees/5
+    [HttpGet("{id}")]
+    public async Task<ActionResult<EpuEmployee>> GetEpuEmployee(int id)
+    {
+      if (_context.EpuEmployee == null)
+      {
+          return NotFound();
+      }
+        var epuEmployee = await _context.EpuEmployee.FindAsync(id);
+
+        if (epuEmployee == null)
+        {
+            return NotFound();
+        }
+
+        return epuEmployee;
+    }
+
+    // PUT: api/EpuEmployees/5
+    [HttpPut("{id}")]
+    public async Task<IActionResult> PutEpuEmployee(int id, EpuEmployee epuEmployee)
+    {
+        if (id != epuEmployee.Id)
+        {
+            return BadRequest();
+        }
+
+        _context.Entry(epuEmployee).State = EntityState.Modified;
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!EpuEmployeeExists(id))
+            {
+                return NotFound();
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        return NoContent();
+    }
+
+    // POST: api/EpuEmployees
+    [HttpPost]
+    public async Task<ActionResult<EpuEmployee>> PostEpuEmployee(EpuEmployee epuEmployee)
+    {
+      if (_context.EpuEmployee == null)
+      {
+          return Problem("Entity set 'EpuContext.EpuEmployee'  is null.");
+      }
+        _context.EpuEmployee.Add(epuEmployee);
+        await _context.SaveChangesAsync();
+
+        return CreatedAtAction("GetEpuEmployee", new { id = epuEmployee.Id }, epuEmployee);
+    }
+
+    // DELETE: api/EpuEmployees/5
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteEpuEmployee(int id)
+    {
+        if (_context.EpuEmployee == null)
+        {
+            return NotFound();
+        }
+        var epuEmployee = await _context.EpuEmployee.FindAsync(id);
+        if (epuEmployee == null)
+        {
+            return NotFound();
+        }
+
+        _context.EpuEmployee.Remove(epuEmployee);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    private bool EpuEmployeeExists(int id)
+    {
+        return (_context.EpuEmployee?.Any(e => e.Id == id)).GetValueOrDefault();
+    }
+}
